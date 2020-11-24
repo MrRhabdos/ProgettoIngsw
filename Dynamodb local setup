@@ -1,0 +1,38 @@
+- Comando per far partite il db: java -D"java.library.path=./DynamoDBLocal_lib" -jar DynamoDBLocal.jar -inMemory -sharedDb
+      i flag servono per memorizzare il db in memoria (inMemory) e per condividere i contenuti del db con chiunque vi acceda anzichè avere db diversi per regione (sharedDB).
+
+- Visualizzare i contenuti del db: 
+   Utilizzare il seguente link: http://localhost:8000/shell/ 
+      se i flag sono stati usati correttamente, allora si può utilizzare il seguente script per vedere i contenuti della tabella Movies (cambiare il nome della tabella nello script
+       per vedere altre tabelle):
+
+var dynamodb = new AWS.DynamoDB({
+region: 'us-east-1',
+endpoint: "http://localhost:8000"
+});
+var tableName = "Movies";
+
+var params = {
+TableName: tableName,
+Select: "ALL_ATTRIBUTES"
+};
+
+
+function doScan(response) {
+if (response.error) ppJson(response.error); // an error occurred
+else {
+    ppJson(response.data); // successful response
+
+    // More data.  Keep calling scan.
+    if ('LastEvaluatedKey' in response.data) {
+        response.request.params.ExclusiveStartKey = response.data.LastEvaluatedKey;
+        dynamodb.scan(response.request.params)
+            .on('complete', doScan)
+            .send();
+    }
+}
+}
+console.log("Starting a Scan of the table");
+dynamodb.scan(params)
+.on('complete', doScan)
+.send();
